@@ -1,4 +1,5 @@
 import numpy as np
+from visualization import plot_training_metrics, plot_weights_evolution, plot_xor_decision_boundary
 
 EPOCHS = 100000
 lr = 0.1
@@ -97,6 +98,12 @@ def train(X, Y, W, B, EPOCHS, lr, target_mse):
     return W, B, mse_history, classification_error_history, weights_history
 
 W, B, mse_history, classification_error_history, weights_history = train(X, Y, W, B, EPOCHS, lr, TARGET_MSE)
+
+# Visualization
+print("\nGenerating plots...")
+plot_training_metrics(mse_history, classification_error_history, title="XOR Training")
+plot_weights_evolution(weights_history, layers)
+plot_xor_decision_boundary(X, Y, W, B, forward)
 
 def XOR(z, W, B):
     y_hat, _ = forward(z, W, B, [None]*len(W))

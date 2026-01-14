@@ -5,6 +5,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import joblib
 import numpy as np
 import torch.nn.functional as F
+from visualization import plot_loss_and_accuracy
 
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
@@ -100,6 +101,10 @@ for epoch in range(NUM_EPOCHS):
 
 print("\nTraining finished.")
 print("-" * 30)
+
+# Visualization
+print("\nGenerating plots...")
+plot_loss_and_accuracy(loss_history, accuracy_history, title="Titanic Model")
 
 model.eval()
 with torch.no_grad():

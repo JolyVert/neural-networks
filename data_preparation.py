@@ -5,7 +5,7 @@ import os
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-CSV_PATH = 'data_set/Titanic-Dataset.csv'
+CSV_PATH = 'data/Titanic-Dataset.csv'
 OUTPUT_DIR = 'data'
 
 if not os.path.exists(OUTPUT_DIR):

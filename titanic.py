@@ -5,7 +5,11 @@ from torch.utils.data import TensorDataset, DataLoader
 import joblib
 import numpy as np
 import torch.nn.functional as F
-from visualization import plot_loss_and_accuracy
+from visualization import (
+    plot_loss_accuracy_and_classification_error,
+    plot_weights_evolution_separate,
+)
+import os
 
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
@@ -56,6 +60,8 @@ optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 
 loss_history = []
 accuracy_history = []
+classification_error_history = []
+weights_history = []
 min_val_loss = np.inf
 patience_counter = 0
 
@@ -81,8 +87,19 @@ for epoch in range(NUM_EPOCHS):
 
     avg_loss = epoch_loss / total_samples
     accuracy = correct_predictions / total_samples
+    classification_error = 1.0 - accuracy
+    classification_error_history.append(classification_error)
     loss_history.append(avg_loss)
     accuracy_history.append(accuracy)
+
+    # track weight evolution (weights only, no biases)
+    with torch.no_grad():
+        flat_weights = torch.cat([
+            model.fc1.weight.view(-1),
+            model.fc2.weight.view(-1),
+            model.fc3.weight.view(-1),
+        ]).cpu().numpy()
+        weights_history.append(flat_weights)
 
     if avg_loss < min_val_loss:
         min_val_loss = avg_loss
@@ -104,7 +121,22 @@ print("-" * 30)
 
 # Visualization
 print("\nGenerating plots...")
-plot_loss_and_accuracy(loss_history, accuracy_history, title="Titanic Model")
+os.makedirs('results/titanic', exist_ok=True)
+
+plot_loss_accuracy_and_classification_error(
+    loss_history,
+    accuracy_history,
+    classification_error_history,
+    title="Titanic Model",
+    save_path='results/titanic/titanic_loss_acc_err.png'
+)
+
+plot_weights_evolution_separate(
+    weights_history,
+    layer_sizes=[INPUT_SIZE, 32, 16, 1],
+    save_dir='results/titanic',
+    legend_limit=20
+)
 
 model.eval()
 with torch.no_grad():

@@ -1,5 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+def _ensure_dir(path):
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
 
 def plot_training_metrics(mse_history, classification_error_history, title="Training Progress"):
     """
@@ -27,7 +32,7 @@ def plot_training_metrics(mse_history, classification_error_history, title="Trai
     plt.savefig(f'{title.replace(" ", "_").lower()}_metrics.png', dpi=300)
     plt.show()
 
-def plot_weights_evolution(weights_history, layer_sizes):
+def plot_weights_evolution(weights_history, layer_sizes, save_path=None):
     """
     Plots the evolution of weights during training for each layer.
     """
@@ -56,10 +61,49 @@ def plot_weights_evolution(weights_history, layer_sizes):
         weight_idx += num_layer_weights
     
     plt.tight_layout()
-    plt.savefig('weights_evolution.png', dpi=300)
+    _ensure_dir(save_path)
+    plt.savefig(save_path or 'weights_evolution.png', dpi=300)
     plt.show()
 
-def plot_loss_and_accuracy(loss_history, accuracy_history, title="Model Training"):
+def plot_weights_evolution_separate(weights_history, layer_sizes, save_dir=None, legend_limit=20):
+    """
+    Plots weight evolution in separate figures per layer.
+    Only the first `legend_limit` weights are labeled to keep the legend readable.
+    """
+    weights_array = np.array(weights_history)
+    weight_idx = 0
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+
+    for layer_idx in range(len(layer_sizes) - 1):
+        num_layer_weights = layer_sizes[layer_idx] * layer_sizes[layer_idx + 1]
+        fig, ax = plt.subplots(1, 1, figsize=(10, 4))
+
+        for i in range(num_layer_weights):
+            label = f"w{i+1}" if i < legend_limit else None
+            ax.plot(
+                weights_array[:, weight_idx + i],
+                label=label,
+                alpha=0.7,
+                linewidth=1.2
+            )
+
+        ax.set_xlabel('Epoch')
+        ax.set_ylabel('Weight Value')
+        ax.set_title(f'Layer {layer_idx + 1} Weights Evolution ({layer_sizes[layer_idx]}→{layer_sizes[layer_idx + 1]})')
+        ax.grid(True, alpha=0.3)
+        if legend_limit > 0:
+            ax.legend(loc='best', ncol=3, fontsize=8)
+
+        plt.tight_layout()
+        filename = f'weights_layer{layer_idx + 1}.png'
+        save_path = os.path.join(save_dir, filename) if save_dir else filename
+        _ensure_dir(save_path)
+        plt.savefig(save_path, dpi=300)
+        plt.close(fig)
+
+def plot_loss_and_accuracy(loss_history, accuracy_history, title="Model Training", save_path=None):
     """
     Plots loss and accuracy for neural network training (e.g., Titanic).
     """
@@ -83,7 +127,31 @@ def plot_loss_and_accuracy(loss_history, accuracy_history, title="Model Training
     ax2.set_ylim([0, 1.1])
     
     plt.tight_layout()
-    plt.savefig(f'{title.replace(" ", "_").lower()}_training.png', dpi=300)
+    _ensure_dir(save_path)
+    plt.savefig(save_path or f'{title.replace(" ", "_").lower()}_training.png', dpi=300)
+    plt.show()
+
+def plot_loss_accuracy_and_classification_error(loss_history, accuracy_history, classification_error_history, title="Model Training", save_path=None):
+    """
+    Plots loss, accuracy, and classification error for neural network training.
+    """
+    fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+    axes[0].plot(loss_history, label='Loss (BCE)', color='orange', linewidth=2)
+    axes[0].set_xlabel('Epoch'); axes[0].set_ylabel('Loss')
+    axes[0].set_title(f'{title} - Loss'); axes[0].grid(True, alpha=0.3); axes[0].legend()
+
+    axes[1].plot(accuracy_history, label='Accuracy', color='green', linewidth=2)
+    axes[1].set_xlabel('Epoch'); axes[1].set_ylabel('Accuracy')
+    axes[1].set_title(f'{title} - Accuracy'); axes[1].grid(True, alpha=0.3); axes[1].legend(); axes[1].set_ylim([0, 1.1])
+
+    axes[2].plot(classification_error_history, label='Classification Error', color='red', linewidth=2)
+    axes[2].set_xlabel('Epoch'); axes[2].set_ylabel('Error Rate')
+    axes[2].set_title(f'{title} - Classification Error'); axes[2].grid(True, alpha=0.3); axes[2].legend(); axes[2].set_ylim([0, 1.1])
+
+    plt.tight_layout()
+    _ensure_dir(save_path)
+    plt.savefig(save_path or f'{title.replace(" ", "_").lower()}_loss_acc_class_error.png', dpi=300)
     plt.show()
 
 def plot_xor_decision_boundary(X, Y, W, B, forward_func):
